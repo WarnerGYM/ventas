@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Almacén de Ventas - Gimnasio</title>
+  <style>
+    body { background:#121212; color:#fff; font-family:Arial,sans-serif; margin:0; padding:1rem; }
+    h2 { color:#ffcc00; }
+    .card { background:#1e1e1e; padding:1rem; margin:1rem 0; border-radius:8px; }
+    input, select, button { margin:.3rem; padding:.5rem; border-radius:5px; border:none; }
+    button { background:#ffcc00; cursor:pointer; font-weight:bold; }
+    table { width:100%; border-collapse:collapse; margin-top:1rem; }
+    th, td { border:1px solid #444; padding:.5rem; text-align:center; }
+    th { background:#333; }
+  </style>
+</head>
+<body>
+  <h1>🏋️ Almacén de Ventas - Gimnasio</h1>
+
+  <!-- Registro de productos -->
+  <div class="card">
+    <h2>📦 Registrar Producto</h2>
+    <input id="nombreProducto" placeholder="Nombre">
+    <input id="precioProducto" type="number" placeholder="Precio">
+    <input id="cantidadProducto" type="number" placeholder="Cantidad">
+    <button onclick="registrarProducto()">Agregar Producto</button>
+  </div>
+
+  <!-- Registrar venta -->
+  <div class="card">
+    <h2>💰 Registrar Venta</h2>
+    <select id="productoVenta"></select>
+    <input id="cantidadVenta" type="number" placeholder="Cantidad">
+    <button onclick="registrarVenta()">Registrar Venta</button>
+  </div>
+
+  <!-- Registrar compra -->
+  <div class="card">
+    <h2>🛒 Registrar Compra</h2>
+    <select id="productoCompra"></select>
+    <input id="cantidadCompra" type="number" placeholder="Cantidad">
+    <input id="costoCompra" type="number" placeholder="Costo total">
+    <button onclick="registrarCompra()">Registrar Compra</button>
+  </div>
+
+  <!-- Historial -->
+  <div class="card">
+    <h2>📜 Historial</h2>
+    <label>Filtro:</label>
+    <select id="filtroTipo" onchange="mostrarHistorial()">
+      <option value="todos">Todos</option>
+      <option value="venta">Ventas</option>
+      <option value="compra">Compras</option>
+      <option value="registro">Registros</option>
+    </select>
+    <input type="date" id="filtroFecha" onchange="mostrarHistorial()">
+    <table>
+      <thead>
+        <tr><th>Fecha</th><th>Tipo</th><th>Detalle</th><th>Monto</th></tr>
+      </thead>
+      <tbody id="tablaHistorial"></tbody>
+    </table>
+    <h3>💵 Ganancia Total del Día: <span id="ganancia">0</span></h3>
+  </div>
+
+  <script>
+    let productos = JSON.parse(localStorage.getItem("productos")) || [];
+    let historial = JSON.parse(localStorage.getItem("historial")) || [];
+
+    function guardar() {
+      localStorage.setItem("productos", JSON.stringify(productos));
+      localStorage.setItem("historial", JSON.stringify(historial));
+    }
+
+    function registrarProducto() {
+      let nombre = document.getElementById("nombreProducto").value;
+      let precio = parseFloat(document.getElementById("precioProducto").value);
+      let cantidad = parseInt(document.getElementById("cantidadProducto").value);
+
+      if (!nombre || precio<=0 || cantidad<=0) return alert("Datos inválidos");
+
+      productos.push({nombre, precio, cantidad});
+      historial.push({fecha:new Date().toISOString().slice(0,10), tipo:"registro", detalle:`Nuevo producto: ${nombre}`, monto:0});
+      guardar();
+      actualizarSelects();
+      mostrarHistorial();
+      alert("Producto registrado");
+    }
+
+    function registrarVenta() {
+      let idx = document.getElementById("productoVenta").value;
+      let cantidad = parseInt(document.getElementById("cantidadVenta").value);
+
+      if (idx==="" || cantidad<=0) return alert("Datos inválidos");
+
+      let producto = productos[idx];
+      if (producto.cantidad < cantidad) return alert("No hay suficiente stock");
+
+      producto.cantidad -= cantidad;
+      let monto = producto.precio * cantidad;
+
+      historial.push({fecha:new Date().toISOString().slice(0,10), tipo:"venta", detalle:`${cantidad} x ${producto.nombre}`, monto:monto});
+      guardar();
+      mostrarHistorial();
+      alert("Venta registrada");
+    }
+
+    function registrarCompra() {
+      let idx = document.getElementById("productoCompra").value;
+      let cantidad = parseInt(document.getElementById("cantidadCompra").value);
+      let costo = parseFloat(document.getElementById("costoCompra").value);
+
+      if (idx==="" || cantidad<=0 || costo<=0) return alert("Datos inválidos");
+
+      let producto = productos[idx];
+      producto.cantidad += cantidad;
+
+      historial.push({fecha:new Date().toISOString().slice(0,10), tipo:"compra", detalle:`${cantidad} x ${producto.nombre}`, monto:-costo});
+      guardar();
+      mostrarHistorial();
+      alert("Compra registrada");
+    }
+
+    function actualizarSelects() {
+      let opciones = productos.map((p,i)=>`<option value="${i}">${p.nombre} (Stock:${p.cantidad})</option>`).join("");
+      document.getElementById("productoVenta").innerHTML = opciones;
+      document.getElementById("productoCompra").innerHTML = opciones;
+    }
+
+    function mostrarHistorial() {
+      let filtroTipo = document.getElementById("filtroTipo").value;
+      let filtroFecha = document.getElementById("filtroFecha").value;
+      let tbody = document.getElementById("tablaHistorial");
+      tbody.innerHTML = "";
+
+      let ganancia = 0;
+      historial.forEach(h=>{
+        if ((filtroTipo==="todos" || h.tipo===filtroTipo) && (!filtroFecha || h.fecha===filtroFecha)) {
+          let row = `<tr><td>${h.fecha}</td><td>${h.tipo}</td><td>${h.detalle}</td><td>${h.monto}</td></tr>`;
+          tbody.innerHTML += row;
+        }
+        // calcular ganancia del día actual
+        if (h.fecha === new Date().toISOString().slice(0,10)) ganancia += h.monto;
+      });
+      document.getElementById("ganancia").innerText = ganancia;
+    }
+
+    actualizarSelects();
+    mostrarHistorial();
+  </script>
+</body>
+</html>
