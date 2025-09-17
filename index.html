@@ -24,8 +24,9 @@
       <option value="">-- Nuevo Producto --</option>
     </select><br>
     <input id="nombreProducto" placeholder="Nombre">
-    <input id="precioProducto" type="number" placeholder="Precio">
+    <input id="precioProducto" type="number" placeholder="Precio unitario">
     <input id="cantidadProducto" type="number" placeholder="Cantidad">
+    <input id="costoRegistro" type="number" placeholder="Costo total (opcional)">
     <button onclick="registrarProducto()">Agregar Producto</button>
     <button onclick="editarProducto()">Editar Producto</button>
   </div>
@@ -81,11 +82,17 @@
       let nombre = document.getElementById("nombreProducto").value;
       let precio = parseFloat(document.getElementById("precioProducto").value);
       let cantidad = parseInt(document.getElementById("cantidadProducto").value);
+      let costoRegistro = parseFloat(document.getElementById("costoRegistro").value) || 0;
 
       if (!nombre || precio<=0 || cantidad<=0) return alert("Datos inválidos");
 
       productos.push({nombre, precio, cantidad});
-      historial.push({fecha:new Date().toISOString().slice(0,10), tipo:"registro", detalle:`Nuevo producto: ${nombre}`, monto:0});
+      historial.push({
+        fecha:new Date().toISOString().slice(0,10),
+        tipo:"registro",
+        detalle:`Nuevo producto: ${nombre} (Precio ${precio}, Stock ${cantidad})`,
+        monto:-costoRegistro  // ahora registra costo total como negativo
+      });
       guardar();
       actualizarSelects();
       mostrarHistorial();
@@ -107,7 +114,12 @@
       let detalleCambios = `Editado ${producto.nombre} → ${nombre}, Precio:${precio}, Cantidad:${cantidad}`;
 
       productos[idx] = {nombre, precio, cantidad};
-      historial.push({fecha:new Date().toISOString().slice(0,10), tipo:"edicion", detalle:detalleCambios, monto:0});
+      historial.push({
+        fecha:new Date().toISOString().slice(0,10),
+        tipo:"edicion",
+        detalle:detalleCambios,
+        monto:0
+      });
       guardar();
       actualizarSelects();
       mostrarHistorial();
@@ -132,6 +144,7 @@
       document.getElementById("nombreProducto").value = "";
       document.getElementById("precioProducto").value = "";
       document.getElementById("cantidadProducto").value = "";
+      document.getElementById("costoRegistro").value = "";
     }
 
     function registrarVenta() {
@@ -146,7 +159,12 @@
       producto.cantidad -= cantidad;
       let monto = producto.precio * cantidad;
 
-      historial.push({fecha:new Date().toISOString().slice(0,10), tipo:"venta", detalle:`${cantidad} x ${producto.nombre}`, monto:monto});
+      historial.push({
+        fecha:new Date().toISOString().slice(0,10),
+        tipo:"venta",
+        detalle:`${cantidad} x ${producto.nombre}`,
+        monto:monto
+      });
       guardar();
       mostrarHistorial();
       actualizarSelects();
@@ -163,7 +181,12 @@
       let producto = productos[idx];
       producto.cantidad += cantidad;
 
-      historial.push({fecha:new Date().toISOString().slice(0,10), tipo:"compra", detalle:`${cantidad} x ${producto.nombre}`, monto:-costo});
+      historial.push({
+        fecha:new Date().toISOString().slice(0,10),
+        tipo:"compra",
+        detalle:`${cantidad} x ${producto.nombre}`,
+        monto:-costo
+      });
       guardar();
       mostrarHistorial();
       actualizarSelects();
