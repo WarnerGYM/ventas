@@ -19,11 +19,15 @@
 
   <!-- Registro de productos -->
   <div class="card">
-    <h2>📦 Registrar Producto</h2>
+    <h2>📦 Registrar / Editar Producto</h2>
+    <select id="productoEditar" onchange="cargarProducto()">
+      <option value="">-- Nuevo Producto --</option>
+    </select><br>
     <input id="nombreProducto" placeholder="Nombre">
     <input id="precioProducto" type="number" placeholder="Precio">
     <input id="cantidadProducto" type="number" placeholder="Cantidad">
     <button onclick="registrarProducto()">Agregar Producto</button>
+    <button onclick="editarProducto()">Editar Producto</button>
   </div>
 
   <!-- Registrar venta -->
@@ -52,6 +56,7 @@
       <option value="venta">Ventas</option>
       <option value="compra">Compras</option>
       <option value="registro">Registros</option>
+      <option value="edicion">Ediciones</option>
     </select>
     <input type="date" id="filtroFecha" onchange="mostrarHistorial()">
     <table>
@@ -84,7 +89,49 @@
       guardar();
       actualizarSelects();
       mostrarHistorial();
+      limpiarInputs();
       alert("Producto registrado");
+    }
+
+    function editarProducto() {
+      let idx = document.getElementById("productoEditar").value;
+      if (idx==="") return alert("Seleccione un producto para editar");
+
+      let nombre = document.getElementById("nombreProducto").value;
+      let precio = parseFloat(document.getElementById("precioProducto").value);
+      let cantidad = parseInt(document.getElementById("cantidadProducto").value);
+
+      if (!nombre || precio<=0 || cantidad<0) return alert("Datos inválidos");
+
+      let producto = productos[idx];
+      let detalleCambios = `Editado ${producto.nombre} → ${nombre}, Precio:${precio}, Cantidad:${cantidad}`;
+
+      productos[idx] = {nombre, precio, cantidad};
+      historial.push({fecha:new Date().toISOString().slice(0,10), tipo:"edicion", detalle:detalleCambios, monto:0});
+      guardar();
+      actualizarSelects();
+      mostrarHistorial();
+      limpiarInputs();
+      alert("Producto editado");
+    }
+
+    function cargarProducto() {
+      let idx = document.getElementById("productoEditar").value;
+      if (idx==="") {
+        limpiarInputs();
+        return;
+      }
+      let producto = productos[idx];
+      document.getElementById("nombreProducto").value = producto.nombre;
+      document.getElementById("precioProducto").value = producto.precio;
+      document.getElementById("cantidadProducto").value = producto.cantidad;
+    }
+
+    function limpiarInputs() {
+      document.getElementById("productoEditar").value = "";
+      document.getElementById("nombreProducto").value = "";
+      document.getElementById("precioProducto").value = "";
+      document.getElementById("cantidadProducto").value = "";
     }
 
     function registrarVenta() {
@@ -102,6 +149,7 @@
       historial.push({fecha:new Date().toISOString().slice(0,10), tipo:"venta", detalle:`${cantidad} x ${producto.nombre}`, monto:monto});
       guardar();
       mostrarHistorial();
+      actualizarSelects();
       alert("Venta registrada");
     }
 
@@ -118,6 +166,7 @@
       historial.push({fecha:new Date().toISOString().slice(0,10), tipo:"compra", detalle:`${cantidad} x ${producto.nombre}`, monto:-costo});
       guardar();
       mostrarHistorial();
+      actualizarSelects();
       alert("Compra registrada");
     }
 
@@ -125,6 +174,7 @@
       let opciones = productos.map((p,i)=>`<option value="${i}">${p.nombre} (Stock:${p.cantidad})</option>`).join("");
       document.getElementById("productoVenta").innerHTML = opciones;
       document.getElementById("productoCompra").innerHTML = opciones;
+      document.getElementById("productoEditar").innerHTML = `<option value="">-- Nuevo Producto --</option>` + opciones;
     }
 
     function mostrarHistorial() {
@@ -139,7 +189,6 @@
           let row = `<tr><td>${h.fecha}</td><td>${h.tipo}</td><td>${h.detalle}</td><td>${h.monto}</td></tr>`;
           tbody.innerHTML += row;
         }
-        // calcular ganancia del día actual
         if (h.fecha === new Date().toISOString().slice(0,10)) ganancia += h.monto;
       });
       document.getElementById("ganancia").innerText = ganancia;
