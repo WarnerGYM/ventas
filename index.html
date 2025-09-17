@@ -67,6 +67,10 @@
       <tbody id="tablaHistorial"></tbody>
     </table>
     <h3>💵 Ganancia Total del Día: <span id="ganancia">0</span></h3>
+    <button onclick="exportarHistorial()">💾 Exportar Historial JSON</button>
+    <input type="file" id="importFile" style="display:none" onchange="importarHistorial(event)">
+    <button onclick="document.getElementById('importFile').click()">📂 Importar Historial JSON</button>
+    <button onclick="limpiezaGeneral()">🧹 Limpieza General (Respaldo automático)</button>
   </div>
 
   <script>
@@ -78,6 +82,7 @@
       localStorage.setItem("historial", JSON.stringify(historial));
     }
 
+    // --- Productos ---
     function registrarProducto() {
       let nombre = document.getElementById("nombreProducto").value;
       let precio = parseFloat(document.getElementById("precioProducto").value);
@@ -91,7 +96,7 @@
         fecha:new Date().toISOString().slice(0,10),
         tipo:"registro",
         detalle:`Nuevo producto: ${nombre} (Precio ${precio}, Stock ${cantidad})`,
-        monto:-costoRegistro  // ahora registra costo total como negativo
+        monto:-costoRegistro
       });
       guardar();
       actualizarSelects();
@@ -129,10 +134,7 @@
 
     function cargarProducto() {
       let idx = document.getElementById("productoEditar").value;
-      if (idx==="") {
-        limpiarInputs();
-        return;
-      }
+      if (idx==="") { limpiarInputs(); return; }
       let producto = productos[idx];
       document.getElementById("nombreProducto").value = producto.nombre;
       document.getElementById("precioProducto").value = producto.precio;
@@ -147,10 +149,10 @@
       document.getElementById("costoRegistro").value = "";
     }
 
+    // --- Ventas y Compras ---
     function registrarVenta() {
       let idx = document.getElementById("productoVenta").value;
       let cantidad = parseInt(document.getElementById("cantidadVenta").value);
-
       if (idx==="" || cantidad<=0) return alert("Datos inválidos");
 
       let producto = productos[idx];
@@ -193,6 +195,7 @@
       alert("Compra registrada");
     }
 
+    // --- Selects y Historial ---
     function actualizarSelects() {
       let opciones = productos.map((p,i)=>`<option value="${i}">${p.nombre} (Stock:${p.cantidad})</option>`).join("");
       document.getElementById("productoVenta").innerHTML = opciones;
@@ -215,6 +218,54 @@
         if (h.fecha === new Date().toISOString().slice(0,10)) ganancia += h.monto;
       });
       document.getElementById("ganancia").innerText = ganancia;
+    }
+
+    // --- Exportar/Importar JSON ---
+    function exportarHistorial() {
+      const dataStr = JSON.stringify({productos,historial}, null, 2);
+      const blob = new Blob([dataStr], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `historial_gimnasio_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importarHistorial(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.productos && data.historial) {
+            productos = data.productos;
+            historial = data.historial;
+            guardar();
+            actualizarSelects();
+            mostrarHistorial();
+            alert("Importación exitosa");
+          } else {
+            alert("Archivo inválido");
+          }
+        } catch(err) {
+          alert("Error al leer JSON");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // --- Limpieza general ---
+    function limpiezaGeneral() {
+      if (!confirm("¿Seguro que desea limpiar todo el sistema? Se hará un respaldo automático.")) return;
+      exportarHistorial(); // respaldo automático
+      productos = [];
+      historial = [];
+      guardar();
+      actualizarSelects();
+      mostrarHistorial();
+      alert("Sistema limpiado y respaldo generado");
     }
 
     actualizarSelects();
