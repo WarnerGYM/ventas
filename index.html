@@ -214,8 +214,10 @@
         if ((filtroTipo==="todos" || h.tipo===filtroTipo) && (!filtroFecha || h.fecha===filtroFecha)) {
           let row = `<tr><td>${h.fecha}</td><td>${h.tipo}</td><td>${h.detalle}</td><td>${h.monto}</td></tr>`;
           tbody.innerHTML += row;
+
+          // ✅ La ganancia ahora se calcula con los elementos filtrados
+          ganancia += h.monto;
         }
-        if (h.fecha === new Date().toISOString().slice(0,10)) ganancia += h.monto;
       });
       document.getElementById("ganancia").innerText = ganancia;
     }
