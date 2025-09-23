@@ -71,6 +71,7 @@
     <input type="file" id="importFile" style="display:none" onchange="importarHistorial(event)">
     <button onclick="document.getElementById('importFile').click()">📂 Importar Historial JSON</button>
     <button onclick="limpiezaGeneral()">🧹 Limpieza General (Respaldo automático)</button>
+    <button onclick="limpiarHistorial()">🧹 Borrar Solo Historial</button>
   </div>
 
   <script>
@@ -82,10 +83,8 @@
       localStorage.setItem("historial", JSON.stringify(historial));
     }
 
-    // Función para obtener la fecha actual en CDMX en formato YYYY-MM-DD
     function fechaHoyCDMX() {
       let ahora = new Date();
-      // Ajuste de UTC a GMT-6 (CDMX)
       let utc = ahora.getTime() + (ahora.getTimezoneOffset() * 60000);
       let cdmx = new Date(utc - 6 * 3600000);
       return cdmx.toISOString().slice(0,10);
@@ -278,9 +277,17 @@
       alert("Sistema limpiado y respaldo generado");
     }
 
+    // --- Borrar solo historial ---
+    function limpiarHistorial() {
+      if (!confirm("¿Seguro que desea borrar solo el historial?")) return;
+      historial = [];
+      guardar();
+      mostrarHistorial();
+      alert("Historial borrado");
+    }
+
     actualizarSelects();
     mostrarHistorial();
   </script>
 </body>
 </html>
-
