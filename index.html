@@ -82,6 +82,15 @@
       localStorage.setItem("historial", JSON.stringify(historial));
     }
 
+    // Función para obtener la fecha actual en CDMX en formato YYYY-MM-DD
+    function fechaHoyCDMX() {
+      let ahora = new Date();
+      // Ajuste de UTC a GMT-6 (CDMX)
+      let utc = ahora.getTime() + (ahora.getTimezoneOffset() * 60000);
+      let cdmx = new Date(utc - 6 * 3600000);
+      return cdmx.toISOString().slice(0,10);
+    }
+
     // --- Productos ---
     function registrarProducto() {
       let nombre = document.getElementById("nombreProducto").value;
@@ -93,7 +102,7 @@
 
       productos.push({nombre, precio, cantidad});
       historial.push({
-        fecha:new Date().toISOString().slice(0,10),
+        fecha: fechaHoyCDMX(),
         tipo:"registro",
         detalle:`Nuevo producto: ${nombre} (Precio ${precio}, Stock ${cantidad})`,
         monto:-costoRegistro
@@ -120,7 +129,7 @@
 
       productos[idx] = {nombre, precio, cantidad};
       historial.push({
-        fecha:new Date().toISOString().slice(0,10),
+        fecha: fechaHoyCDMX(),
         tipo:"edicion",
         detalle:detalleCambios,
         monto:0
@@ -162,7 +171,7 @@
       let monto = producto.precio * cantidad;
 
       historial.push({
-        fecha:new Date().toISOString().slice(0,10),
+        fecha: fechaHoyCDMX(),
         tipo:"venta",
         detalle:`${cantidad} x ${producto.nombre}`,
         monto:monto
@@ -184,7 +193,7 @@
       producto.cantidad += cantidad;
 
       historial.push({
-        fecha:new Date().toISOString().slice(0,10),
+        fecha: fechaHoyCDMX(),
         tipo:"compra",
         detalle:`${cantidad} x ${producto.nombre}`,
         monto:-costo
@@ -215,7 +224,6 @@
           let row = `<tr><td>${h.fecha}</td><td>${h.tipo}</td><td>${h.detalle}</td><td>${h.monto}</td></tr>`;
           tbody.innerHTML += row;
 
-          // ✅ La ganancia ahora se calcula con los elementos filtrados
           ganancia += h.monto;
         }
       });
@@ -229,7 +237,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `historial_gimnasio_${new Date().toISOString().slice(0,10)}.json`;
+      a.download = `historial_gimnasio_${fechaHoyCDMX()}.json`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -270,7 +278,6 @@
       alert("Sistema limpiado y respaldo generado");
     }
 
-    
     actualizarSelects();
     mostrarHistorial();
   </script>
